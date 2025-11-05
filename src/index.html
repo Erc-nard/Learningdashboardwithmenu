@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학습 관리 앱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #ffffff;
+            color: #030213;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 768px;
+            margin: 0 auto;
+            background-color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 64px;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            max-width: 768px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav-container {
+            display: flex;
+            height: 64px;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            background: none;
+        }
+
+        .nav-item:hover {
+            background-color: #f3f3f5;
+        }
+
+        .nav-item.active {
+            background-color: #ececf0;
+        }
+
+        .nav-item .emoji {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-item .label {
+            font-size: 12px;
+            color: #717182;
+        }
+
+        .nav-item.active .label {
+            color: #030213;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #ececf0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .button-primary {
+            background-color: #030213;
+            color: white;
+        }
+
+        .button-primary:hover {
+            opacity: 0.9;
+        }
+
+        .button-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-outline {
+            background-color: white;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #030213;
+        }
+
+        .button-outline:hover {
+            background-color: #f3f3f5;
+        }
+
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 16px;
+            background-color: #ececf0;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .tab {
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .flip-card {
+            perspective: 1000px;
+            min-height: 300px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            min-height: 300px;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front,
+        .flip-card-back {
+            position: absolute;
+            width: 100%;
+            min-height: 300px;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        .input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            background-color: #f3f3f5;
+            font-size: 16px;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: #030213;
+        }
+
+        .textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            background-color: #f3f3f5;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .textarea:focus {
+            outline: none;
+            border-color: #030213;
+        }
+
+        .header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            color: #717182;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .text-muted {
+            color: #717182;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .badge-primary {
+            background-color: #030213;
+            color: white;
+        }
+
+        .badge-secondary {
+            background-color: #ececf0;
+            color: #030213;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #030213;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            max-width: 90%;
+            z-index: 1000;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+
+        .switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background-color: #cbced4;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .switch.active {
+            background-color: #030213;
+        }
+
+        .switch-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .switch.active .switch-thumb {
+            transform: translateX(20px);
+        }
+
+        .file-upload {
+            border: 2px dashed rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 48px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .file-upload:hover {
+            border-color: #030213;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-top: 16px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .calendar-day:hover {
+            background-color: #f3f3f5;
+        }
+
+        .calendar-day.selected {
+            background-color: #030213;
+            color: white;
+        }
+
+        .calendar-day.disabled {
+            color: #cbced4;
+            cursor: default;
+        }
+
+        .calendar-day.disabled:hover {
+            background-color: transparent;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="main-content" id="mainContent"></div>
+        
+        <div class="bottom-nav">
+            <div class="bottom-nav-container">
+                <button class="nav-item active" data-tab="main">
+                    <span class="emoji">🏠</span>
+                    <span class="label">메인</span>
+                </button>
+                <button class="nav-item" data-tab="add">
+                    <span class="emoji">➕</span>
+                    <span class="label">추가</span>
+                </button>
+                <button class="nav-item" data-tab="calendar">
+                    <span class="emoji">📅</span>
+                    <span class="label">달력</span>
+                </button>
+                <button class="nav-item" data-tab="settings">
+                    <span class="emoji">⚙️</span>
+                    <span class="label">설정</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 앱 상태
+        const state = {
+            activeTab: 'main',
+            subjects: [
+                {
+                    id: "1",
+                    name: "한국사",
+                    progress: 65,
+                    color: "#3b82f6"
+                },
+                {
+                    id: "2",
+                    name: "영어 문법",
+                    progress: 42,
+                    color: "#10b981"
+                },
+                {
+                    id: "3",
+                    name: "수학",
+                    progress: 78,
+                    color: "#f59e0b"
+                }
+            ],
+            selectedSubject: null,
+            currentView: 'main',
+            subjectViewStates: {},
+            quizState: null,
+            vocabularyIndex: 0,
+            isVocabFlipped: false,
+            calendarDate: new Date(),
+            plans: [
+                {
+                    id: "1",
+                    title: "한국사 1장 복습",
+                    date: new Date(),
+                    isAI: true
+                }
+            ]
+        };
+
+        // 퀴즈 데이터
+        const mockQuestions = [
+            {
+                id: 1,
+                question: "조선시대 세종대왕이 창제한 문자는?",
+                options: ["한자", "훈민정음", "이두", "향찰"],
+                correctAnswer: 1
+            },
+            {
+                id: 2,
+                question: "임진왜란이 일어난 연도는?",
+                options: ["1492년", "1592년", "1692년", "1792년"],
+                correctAnswer: 1
+            },
+            {
+                id: 3,
+                question: "고려시대 팔만대장경을 보관하고 있는 사찰은?",
+                options: ["불국사", "해인사", "통도사", "범어사"],
+                correctAnswer: 1
+            }
+        ];
+
+        // 노트 데이터
+        const mockNotes = [
+            {
+                id: 1,
+                title: "조선의 건국",
+                content: "1392년 이성계가 위화도 회군을 통해 고려를 무너뜨리고 조선을 건국했습니다.",
+                keyPoints: [
+                    "위화도 회군 (1388년)",
+                    "태조 이성계 즉위 (1392년)",
+                    "한양 천도 (1394년)"
+                ]
+            },
+            {
+                id: 2,
+                title: "세종대왕의 업적",
+                content: "조선 4대 왕인 세종대왕은 훈민정음을 창제하고 과학기술을 발전시켰습니다.",
+                keyPoints: [
+                    "훈민정음 창제 (1443년)",
+                    "측우기, 해시계 발명",
+                    "4군 6진 개척"
+                ]
+            },
+            {
+                id: 3,
+                title: "임진왜란",
+                content: "1592년 일본의 침략으로 시작된 7년간의 전쟁입니다.",
+                keyPoints: [
+                    "이순신 장군의 활약",
+                    "한산도 대첩, 명량해전",
+                    "의병의 활동"
+                ]
+            }
+        ];
+
+        // 단어장 데이터
+        const mockVocabulary = [
+            {
+                id: 1,
+                term: "훈민정음",
+                definition: "세종대왕이 1443년에 창제한 한글의 원래 이름",
+                example: "백성을 가르치는 바른 소리라는 뜻입니다."
+            },
+            {
+                id: 2,
+                term: "과거제",
+                definition: "관리를 선발하기 위한 시험 제도",
+                example: "고려와 조선시대에 시행되었습니다."
+            },
+            {
+                id: 3,
+                term: "의병",
+                definition: "나라가 위기에 처했을 때 자발적으로 일어난 의로운 군대",
+                example: "임진왜란 때 활약했습니다."
+            },
+            {
+                id: 4,
+                term: "한산도 대첩",
+                definition: "1592년 이순신 장군이 한산도 앞바다에서 왜군을 크게 무찌른 해전",
+                example: "학익진 전술을 사용했습니다."
+            },
+            {
+                id: 5,
+                term: "경국대전",
+                definition: "조선시대 법전으로 성종 때 완성",
+                example: "조선의 기본 법전입니다."
+            }
+        ];
+
+        // 유틸리티 함수
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // 화면 렌더링 함수들
+        function renderMainScreen() {
+            return `
+                <div>
+                    <div class="header">
+                        <h1>내 학습</h1>
+                        <p>진행 중인 과목</p>
+                    </div>
+                    <div style="padding: 16px;">
+                        ${state.subjects.length === 0 ? `
+                            <div style="text-align: center; padding: 48px 0;">
+                                <p class="text-muted">아직 학습 중인 과목이 없습니다</p>
+                                <p class="text-muted" style="margin-top: 8px;">➕ 버튼을 눌러 과목을 추가해보세요</p>
+                            </div>
+                        ` : state.subjects.map(subject => `
+                            <div class="card" onclick="selectSubject('${subject.id}')">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <h3 style="font-size: 18px; font-weight: 600;">${subject.name}</h3>
+                                    <span class="text-muted">${subject.progress}%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${subject.progress}%; background-color: ${subject.color};"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSubjectDetail() {
+            const subject = state.selectedSubject;
+            const currentView = state.subjectViewStates[subject.id] || 'quiz-start';
+            const isViewActive = ['quiz', 'notes', 'vocabulary'].includes(currentView);
+
+            return `
+                <div>
+                    <div class="header" style="display: flex; align-items: center; gap: 12px;">
+                        <button onclick="goBackFromSubject()" class="button-outline" style="padding: 8px; border-radius: 50%; width: 40px; height: 40px;">
+                            ←
+                        </button>
+                        <div style="flex: 1;">
+                            <h1 style="font-size: 20px;">${subject.name}</h1>
+                            <p>진도율: ${subject.progress}%</p>
+                        </div>
+                    </div>
+
+                    ${!isViewActive ? `
+                        <div class="tabs">
+                            <button class="tab ${currentView.startsWith('quiz') ? 'active' : ''}" 
+                                    onclick="changeSubjectView('quiz-start')">퀴즈</button>
+                            <button class="tab ${currentView.startsWith('notes') ? 'active' : ''}" 
+                                    onclick="changeSubjectView('notes-start')">노트정리</button>
+                            <button class="tab ${currentView.startsWith('vocabulary') ? 'active' : ''}" 
+                                    onclick="changeSubjectView('vocabulary-start')">단어장</button>
+                        </div>
+                    ` : ''}
+
+                    <div style="padding: 16px;">
+                        ${renderSubjectContent(currentView)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSubjectContent(view) {
+            if (view === 'quiz-start') {
+                return `
+                    <div class="card" style="padding: 24px; text-align: center;">
+                        <h3 style="margin-bottom: 16px;">퀴즈</h3>
+                        <p class="text-muted" style="margin-bottom: 16px;">
+                            AI가 생성한 퀴즈로 학습 내용을 복습하세요
+                        </p>
+                        <button class="button button-primary" onclick="startQuiz()">퀴즈 시작하기</button>
+                    </div>
+                `;
+            } else if (view === 'quiz') {
+                return renderQuiz();
+            } else if (view === 'notes-start') {
+                return `
+                    <div class="card" style="padding: 24px; text-align: center;">
+                        <h3 style="margin-bottom: 16px;">노트정리</h3>
+                        <p class="text-muted" style="margin-bottom: 16px;">
+                            핵심 내용을 정리한 노트를 확인하세요
+                        </p>
+                        <button class="button button-primary" onclick="changeSubjectView('notes')">노트 보기</button>
+                    </div>
+                `;
+            } else if (view === 'notes') {
+                return renderNotes();
+            } else if (view === 'vocabulary-start') {
+                return `
+                    <div class="card" style="padding: 24px; text-align: center;">
+                        <h3 style="margin-bottom: 16px;">단어장</h3>
+                        <p class="text-muted" style="margin-bottom: 16px;">
+                            중요 단어와 개념을 복습하세요
+                        </p>
+                        <button class="button button-primary" onclick="changeSubjectView('vocabulary')">단어장 열기</button>
+                    </div>
+                `;
+            } else if (view === 'vocabulary') {
+                return renderVocabulary();
+            }
+            return '';
+        }
+
+        function renderQuiz() {
+            if (!state.quizState) {
+                state.quizState = {
+                    currentQuestion: 0,
+                    selectedAnswer: null,
+                    score: 0,
+                    answeredQuestions: new Array(mockQuestions.length).fill(false),
+                    showResult: false
+                };
+            }
+
+            const qs = state.quizState;
+
+            if (qs.showResult) {
+                const percentage = Math.round((qs.score / mockQuestions.length) * 100);
+                return `
+                    <div class="card" style="padding: 32px; text-align: center;">
+                        <h2 style="margin-bottom: 16px;">퀴즈 완료!</h2>
+                        <div style="margin: 32px 0;">
+                            <div style="display: inline-flex; align-items: center; justify-content: center; width: 128px; height: 128px; border-radius: 50%; background-color: #030213; color: white; margin-bottom: 16px;">
+                                <span style="font-size: 32px;">${qs.score}/${mockQuestions.length}</span>
+                            </div>
+                            <p class="text-muted">정답률: ${percentage}%</p>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="button button-outline" style="flex: 1;" onclick="restartQuiz()">다시 풀기</button>
+                            <button class="button button-primary" style="flex: 1;" onclick="completeQuiz()">완료</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const question = mockQuestions[qs.currentQuestion];
+            const progress = ((qs.currentQuestion + 1) / mockQuestions.length) * 100;
+
+            return `
+                <div>
+                    <div class="card" style="padding: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span class="text-muted">문제 ${qs.currentQuestion + 1} / ${mockQuestions.length}</span>
+                            <span class="text-muted">${Math.round(progress)}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%; background-color: #030213;"></div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="margin-bottom: 24px;">${question.question}</h3>
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                            ${question.options.map((option, index) => {
+                                const isSelected = qs.selectedAnswer === index;
+                                const isAnswered = qs.answeredQuestions[qs.currentQuestion];
+                                const isCorrect = index === question.correctAnswer;
+                                
+                                let buttonStyle = '';
+                                if (isAnswered) {
+                                    if (isCorrect) {
+                                        buttonStyle = 'border-color: #10b981; background-color: #dcfce7;';
+                                    } else if (isSelected && !isCorrect) {
+                                        buttonStyle = 'border-color: #ef4444; background-color: #fee2e2;';
+                                    }
+                                } else if (isSelected) {
+                                    buttonStyle = 'background-color: #030213; color: white;';
+                                }
+                                
+                                return `
+                                    <button class="button button-outline" 
+                                            style="width: 100%; text-align: left; padding: 16px; ${buttonStyle}"
+                                            onclick="selectAnswer(${index})"
+                                            ${isAnswered ? 'disabled' : ''}>
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <span>${option}</span>
+                                            ${isAnswered && isCorrect ? '<span style="color: #10b981;">✓</span>' : ''}
+                                            ${isAnswered && isSelected && !isCorrect ? '<span style="color: #ef4444;">✗</span>' : ''}
+                                        </div>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        ${!qs.answeredQuestions[qs.currentQuestion] ? `
+                            <button class="button button-primary" 
+                                    style="width: 100%;" 
+                                    onclick="submitAnswer()"
+                                    ${qs.selectedAnswer === null ? 'disabled' : ''}>
+                                정답 확인
+                            </button>
+                        ` : `
+                            <button class="button button-primary" style="width: 100%;" onclick="nextQuestion()">
+                                ${qs.currentQuestion < mockQuestions.length - 1 ? '다음 문제' : '결과 보기'}
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNotes() {
+            return `
+                <div>
+                    <div class="card" style="padding: 16px; background-color: #ececf0; margin-bottom: 16px;">
+                        <p class="text-muted">📖 AI가 학습 자료를 분석하여 핵심 내용을 정리했습니다</p>
+                    </div>
+
+                    ${mockNotes.map((note, index) => `
+                        <div class="card" style="padding: 24px; margin-bottom: 16px;">
+                            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                                <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background-color: #030213; color: white; flex-shrink: 0;">
+                                    ${index + 1}
+                                </div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin-bottom: 8px;">${note.title}</h3>
+                                    <p class="text-muted">${note.content}</p>
+                                </div>
+                            </div>
+                            <hr style="margin: 16px 0; border: none; border-top: 1px solid rgba(0, 0, 0, 0.1);">
+                            <div>
+                                <h4 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: #f59e0b;">⭐</span>
+                                    핵심 포인트
+                                </h4>
+                                <ul style="list-style: none; padding: 0;">
+                                    ${note.keyPoints.map(point => `
+                                        <li style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                            <span style="color: #030213;">•</span>
+                                            <span>${point}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `).join('')}
+
+                    <div class="card" style="padding: 24px; background-color: #dbeafe; border-color: #93c5fd;">
+                        <div style="display: flex; gap: 12px;">
+                            <span style="font-size: 20px;">💡</span>
+                            <div>
+                                <h4 style="margin-bottom: 8px;">학습 팁</h4>
+                                <p class="text-muted">
+                                    각 주제의 핵심 포인트를 중심으로 복습하면 더 효과적으로 학습할 수 있습니다.
+                                    연대기를 정리하면서 역사의 흐름을 이해해보세요.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderVocabulary() {
+            const currentCard = mockVocabulary[state.vocabularyIndex];
+            
+            return `
+                <div>
+                    <div class="card" style="padding: 16px; background-color: #ececf0; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <p class="text-muted">${state.vocabularyIndex + 1} / ${mockVocabulary.length} 단어</p>
+                            <button class="button button-outline" style="padding: 6px 12px; font-size: 14px;" onclick="resetVocabulary()">
+                                🔄 처음부터
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flip-card ${state.isVocabFlipped ? 'flipped' : ''}" onclick="flipVocabCard()">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <div style="text-align: center;">
+                                    <span class="badge badge-primary" style="margin-bottom: 16px;">용어</span>
+                                    <h2 style="margin-bottom: 16px; font-size: 28px;">${currentCard.term}</h2>
+                                    <p class="text-muted">카드를 클릭하여 뜻을 확인하세요</p>
+                                </div>
+                            </div>
+                            <div class="flip-card-back">
+                                <div style="text-align: center;">
+                                    <span class="badge badge-secondary" style="margin-bottom: 16px;">뜻</span>
+                                    <p style="margin-bottom: 16px;">${currentCard.definition}</p>
+                                    ${currentCard.example ? `
+                                        <div style="margin-top: 24px; padding: 16px; background-color: #ececf0; border-radius: 8px;">
+                                            <p class="text-muted">${currentCard.example}</p>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 16px;">
+                        <button class="button button-outline" style="flex: 1;" onclick="previousVocab()">
+                            ← 이전
+                        </button>
+                        <button class="button button-outline" style="flex: 1;" onclick="nextVocab()">
+                            다음 →
+                        </button>
+                    </div>
+
+                    <div class="card" style="padding: 16px; background-color: #dbeafe; border-color: #93c5fd; margin-top: 16px;">
+                        <p style="text-align: center;" class="text-muted">
+                            💡 화살표 버튼으로 단어를 넘기고, 카드를 클릭하여 뜻을 확인하세요
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAddSubject() {
+            return `
+                <div>
+                    <div class="header">
+                        <h1>과목 추가</h1>
+                        <p>PPT 또는 PDF 파일을 업로드하세요</p>
+                    </div>
+                    <div style="padding: 16px;">
+                        <div class="card" style="padding: 32px;">
+                            <div class="file-upload" onclick="document.getElementById('fileInput').click()">
+                                <div style="font-size: 48px; margin-bottom: 16px;">📤</div>
+                                <p style="margin-bottom: 8px;">파일을 선택하거나 드래그하세요</p>
+                                <p class="text-muted">PPT, PDF 파일 지원</p>
+                            </div>
+                            <input type="file" id="fileInput" accept=".pdf,.ppt,.pptx" style="display: none;" onchange="handleFileSelect(event)">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAddSubjectForm(fileName) {
+            return `
+                <div>
+                    <div class="header">
+                        <h1>과목 추가</h1>
+                        <p>PPT 또는 PDF 파일을 업로드하세요</p>
+                    </div>
+                    <div style="padding: 16px;">
+                        <div class="card" style="padding: 16px; margin-bottom: 16px;">
+                            <div style="display: flex; gap: 12px; align-items: center;">
+                                <div style="font-size: 32px;">📄</div>
+                                <div style="flex: 1;">
+                                    <p>${fileName}</p>
+                                    <p class="text-muted" style="font-size: 14px;">파일 선택됨</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding: 24px;">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">과목명 *</label>
+                                <input type="text" id="subjectName" class="input" placeholder="예: 한국사, 영어 문법 등">
+                            </div>
+                            <div style="margin-bottom: 24px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">과목 설명</label>
+                                <textarea id="subjectDesc" class="textarea" placeholder="과목에 대한 간단한 설명을 입력하세요 (선택사항)"></textarea>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="button button-outline" style="flex: 1;" onclick="cancelAddSubject()">취소</button>
+                                <button class="button button-primary" style="flex: 1;" onclick="saveSubject()">저장</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCalendar() {
+            const today = new Date();
+            const currentMonth = state.calendarDate.getMonth();
+            const currentYear = state.calendarDate.getFullYear();
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay();
+
+            const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+            const selectedDatePlans = state.plans.filter(plan => 
+                plan.date.toDateString() === state.calendarDate.toDateString()
+            );
+
+            return `
+                <div>
+                    <div class="header">
+                        <h1>학습 계획</h1>
+                        <p>나의 학습 일정을 관리하세요</p>
+                    </div>
+                    <div style="padding: 16px;">
+                        <div class="card" style="padding: 16px; margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 16px;">
+                                <h3>${currentYear}년 ${monthNames[currentMonth]}</h3>
+                            </div>
+                            <div class="calendar-grid">
+                                ${dayNames.map(day => `<div style="text-align: center; font-weight: 500; color: #717182; padding: 8px;">${day}</div>`).join('')}
+                                ${Array(startingDayOfWeek).fill(0).map(() => '<div></div>').join('')}
+                                ${Array(daysInMonth).fill(0).map((_, i) => {
+                                    const day = i + 1;
+                                    const date = new Date(currentYear, currentMonth, day);
+                                    const isSelected = date.toDateString() === state.calendarDate.toDateString();
+                                    return `
+                                        <div class="calendar-day ${isSelected ? 'selected' : ''}" onclick="selectCalendarDate(${day})">
+                                            ${day}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                <h3>${state.calendarDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</h3>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="button button-outline" style="padding: 6px 12px; font-size: 14px;" onclick="showAddPlanModal()">
+                                        ➕ 추가
+                                    </button>
+                                    <button class="button button-primary" style="padding: 6px 12px; font-size: 14px;" onclick="addAIPlan()">
+                                        ✨ AI 추천
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                ${selectedDatePlans.length === 0 ? `
+                                    <p style="text-align: center; padding: 32px 0;" class="text-muted">이 날짜에 계획이 없습니다</p>
+                                ` : selectedDatePlans.map(plan => `
+                                    <div style="padding: 12px; background-color: #ececf0; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                        <span>${plan.title}</span>
+                                        ${plan.isAI ? '<span class="badge badge-primary" style="font-size: 12px;">AI 추천</span>' : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSettings() {
+            return `
+                <div>
+                    <div class="header">
+                        <h1>설정</h1>
+                        <p>계정 및 앱 설정</p>
+                    </div>
+                    <div style="padding: 16px;">
+                        <div class="card" style="padding: 24px; margin-bottom: 16px;">
+                            <h3 style="margin-bottom: 16px;">계정 정보</h3>
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">👤 이름</label>
+                                <input type="text" class="input" value="홍길동">
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">✉️ 이메일</label>
+                                <input type="email" class="input" value="user@example.com">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">🔒 비밀번호</label>
+                                <button class="button button-outline" style="width: 100%;">비밀번호 변경</button>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding: 24px; margin-bottom: 16px;">
+                            <h3 style="margin-bottom: 16px;">앱 설정</h3>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(0, 0, 0, 0.1);">
+                                <div>
+                                    <label style="display: block; font-weight: 500;">🔔 알림 설정</label>
+                                    <p class="text-muted" style="font-size: 14px;">학습 알림 받기</p>
+                                </div>
+                                <div class="switch active" onclick="this.classList.toggle('active')">
+                                    <div class="switch-thumb"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <label style="display: block; font-weight: 500;">🌙 다크 모드</label>
+                                    <p class="text-muted" style="font-size: 14px;">어두운 테마 사용</p>
+                                </div>
+                                <div class="switch" onclick="this.classList.toggle('active')">
+                                    <div class="switch-thumb"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding: 24px; margin-bottom: 16px;">
+                            <h3 style="margin-bottom: 16px;">학습 목표</h3>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">일일 학습 목표 (분)</label>
+                                <input type="number" class="input" value="60">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px;">
+                            <button class="button button-primary" style="flex: 1;">저장</button>
+                            <button class="button button-outline" style="flex: 1;">로그아웃</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 이벤트 핸들러
+        function selectSubject(id) {
+            state.selectedSubject = state.subjects.find(s => s.id === id);
+            state.currentView = 'subject-detail';
+            render();
+        }
+
+        function goBackFromSubject() {
+            state.selectedSubject = null;
+            state.currentView = 'main';
+            if (state.selectedSubject) {
+                delete state.subjectViewStates[state.selectedSubject.id];
+            }
+            state.quizState = null;
+            state.vocabularyIndex = 0;
+            state.isVocabFlipped = false;
+            render();
+        }
+
+        function changeSubjectView(view) {
+            if (state.selectedSubject) {
+                state.subjectViewStates[state.selectedSubject.id] = view;
+                if (view === 'vocabulary') {
+                    state.vocabularyIndex = 0;
+                    state.isVocabFlipped = false;
+                }
+                render();
+            }
+        }
+
+        // 퀴즈 함수
+        function startQuiz() {
+            state.quizState = {
+                currentQuestion: 0,
+                selectedAnswer: null,
+                score: 0,
+                answeredQuestions: new Array(mockQuestions.length).fill(false),
+                showResult: false
+            };
+            changeSubjectView('quiz');
+        }
+
+        function selectAnswer(index) {
+            if (!state.quizState.answeredQuestions[state.quizState.currentQuestion]) {
+                state.quizState.selectedAnswer = index;
+                render();
+            }
+        }
+
+        function submitAnswer() {
+            if (state.quizState.selectedAnswer === null) return;
+            
+            const qs = state.quizState;
+            qs.answeredQuestions[qs.currentQuestion] = true;
+            
+            const question = mockQuestions[qs.currentQuestion];
+            if (qs.selectedAnswer === question.correctAnswer) {
+                qs.score++;
+            }
+            
+            render();
+        }
+
+        function nextQuestion() {
+            const qs = state.quizState;
+            if (qs.currentQuestion < mockQuestions.length - 1) {
+                qs.currentQuestion++;
+                qs.selectedAnswer = null;
+            } else {
+                qs.showResult = true;
+            }
+            render();
+        }
+
+        function restartQuiz() {
+            startQuiz();
+        }
+
+        function completeQuiz() {
+            changeSubjectView('quiz-start');
+        }
+
+        // 단어장 함수
+        function flipVocabCard() {
+            state.isVocabFlipped = !state.isVocabFlipped;
+            render();
+        }
+
+        function previousVocab() {
+            state.isVocabFlipped = false;
+            state.vocabularyIndex = state.vocabularyIndex > 0 ? state.vocabularyIndex - 1 : mockVocabulary.length - 1;
+            render();
+        }
+
+        function nextVocab() {
+            state.isVocabFlipped = false;
+            state.vocabularyIndex = state.vocabularyIndex < mockVocabulary.length - 1 ? state.vocabularyIndex + 1 : 0;
+            render();
+        }
+
+        function resetVocabulary() {
+            state.vocabularyIndex = 0;
+            state.isVocabFlipped = false;
+            render();
+        }
+
+        // 과목 추가 함수
+        let selectedFileName = '';
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFileName = file.name;
+                document.getElementById('mainContent').innerHTML = renderAddSubjectForm(file.name);
+            }
+        }
+
+        function cancelAddSubject() {
+            selectedFileName = '';
+            render();
+        }
+
+        function saveSubject() {
+            const name = document.getElementById('subjectName').value.trim();
+            if (!name) {
+                alert('과목명을 입력해주세요');
+                return;
+            }
+
+            const newSubject = {
+                id: Date.now().toString(),
+                name: name,
+                progress: 0,
+                color: '#' + Math.floor(Math.random()*16777215).toString(16)
+            };
+
+            state.subjects.push(newSubject);
+            showToast(`"${name}" 과목이 추가되었습니다! AI가 퀴즈를 생성했습니다.`);
+            state.activeTab = 'main';
+            selectedFileName = '';
+            render();
+        }
+
+        // 달력 함수
+        function selectCalendarDate(day) {
+            const currentMonth = state.calendarDate.getMonth();
+            const currentYear = state.calendarDate.getFullYear();
+            state.calendarDate = new Date(currentYear, currentMonth, day);
+            render();
+        }
+
+        function showAddPlanModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content" style="width: 400px; max-width: 90%;">
+                    <h3 style="margin-bottom: 16px;">새 계획 추가</h3>
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">계획 내용</label>
+                        <input type="text" id="planTitle" class="input" placeholder="학습 계획을 입력하세요">
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="button button-outline" style="flex: 1;" onclick="this.closest('.modal').remove()">취소</button>
+                        <button class="button button-primary" style="flex: 1;" onclick="addPlan()">추가하기</button>
+                    </div>
+                </div>
+            `;
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+            document.body.appendChild(modal);
+        }
+
+        function addPlan() {
+            const title = document.getElementById('planTitle').value.trim();
+            if (!title) return;
+
+            const newPlan = {
+                id: Date.now().toString(),
+                title: title,
+                date: new Date(state.calendarDate),
+                isAI: false
+            };
+
+            state.plans.push(newPlan);
+            document.querySelector('.modal').remove();
+            render();
+        }
+
+        function addAIPlan() {
+            const aiSuggestions = [
+                "영어 단어 30개 암기",
+                "수학 문제 풀이 복습",
+                "과학 노트 정리",
+                "역사 요약본 작성"
+            ];
+
+            const randomSuggestion = aiSuggestions[Math.floor(Math.random() * aiSuggestions.length)];
+
+            const aiPlan = {
+                id: Date.now().toString(),
+                title: randomSuggestion,
+                date: new Date(state.calendarDate),
+                isAI: true
+            };
+
+            state.plans.push(aiPlan);
+            render();
+        }
+
+        // 메인 렌더링 함수
+        function render() {
+            const content = document.getElementById('mainContent');
+            
+            if (state.selectedSubject) {
+                content.innerHTML = renderSubjectDetail();
+            } else {
+                switch (state.activeTab) {
+                    case 'main':
+                        content.innerHTML = renderMainScreen();
+                        break;
+                    case 'add':
+                        content.innerHTML = renderAddSubject();
+                        break;
+                    case 'calendar':
+                        content.innerHTML = renderCalendar();
+                        break;
+                    case 'settings':
+                        content.innerHTML = renderSettings();
+                        break;
+                    default:
+                        content.innerHTML = renderMainScreen();
+                }
+            }
+
+            // 네비게이션 활성화 상태 업데이트
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.tab === (state.selectedSubject ? 'main' : state.activeTab)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // 하단 네비게이션 이벤트 리스너
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                state.activeTab = item.dataset.tab;
+                state.selectedSubject = null;
+                state.quizState = null;
+                state.vocabularyIndex = 0;
+                state.isVocabFlipped = false;
+                render();
+            });
+        });
+
+        // 초기 렌더링
+        render();
+    </script>
+</body>
+</html>
