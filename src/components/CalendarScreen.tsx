@@ -8,6 +8,7 @@ import { Label } from "./ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -111,6 +112,7 @@ export function CalendarScreen() {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>새 계획 추가</DialogTitle>
+                      <DialogDescription>학습 계획을 입력하세요</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div>

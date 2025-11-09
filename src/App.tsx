@@ -16,18 +16,42 @@ export default function App() {
       name: "한국사",
       progress: 65,
       color: "#3b82f6",
+      dday: new Date(new Date().setDate(new Date().getDate() + 30)),
+      todos: {
+        quiz: [
+          { id: '1', text: '1~3장 퀴즈 풀기', completed: false }
+        ],
+        notes: [
+          { id: '2', text: '조선시대 정리', completed: true }
+        ],
+        vocabulary: [
+          { id: '3', text: '핵심 용어 20개 암기', completed: false }
+        ]
+      }
     },
     {
       id: "2",
       name: "영어 문법",
       progress: 42,
       color: "#10b981",
+      dday: null,
+      todos: {
+        quiz: [],
+        notes: [],
+        vocabulary: []
+      }
     },
     {
       id: "3",
       name: "수학",
       progress: 78,
       color: "#f59e0b",
+      dday: new Date(new Date().setDate(new Date().getDate() + 15)),
+      todos: {
+        quiz: [],
+        notes: [],
+        vocabulary: []
+      }
     },
   ]);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -72,6 +96,12 @@ export default function App() {
       name: data.name,
       progress: 0,
       color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+      dday: null,
+      todos: {
+        quiz: [],
+        notes: [],
+        vocabulary: []
+      }
     };
     
     setSubjects([...subjects, newSubject]);

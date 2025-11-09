@@ -1,11 +1,23 @@
 import { SubjectCard } from "./SubjectCard";
 import { ScrollArea } from "./ui/scroll-area";
 
+interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 interface Subject {
   id: string;
   name: string;
   progress: number;
   color: string;
+  dday?: Date | null;
+  todos?: {
+    quiz: Todo[];
+    notes: Todo[];
+    vocabulary: Todo[];
+  };
 }
 
 interface MainScreenProps {
@@ -43,4 +55,4 @@ export function MainScreen({ subjects, onSubjectClick }: MainScreenProps) {
   );
 }
 
-export type { Subject };
+export type { Subject, Todo };
