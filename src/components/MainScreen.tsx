@@ -1,5 +1,6 @@
 import { SubjectCard } from "./SubjectCard";
 import { ScrollArea } from "./ui/scroll-area";
+import type { HierarchicalSummary } from "../services/api";
 
 interface Todo {
   id: string;
@@ -18,6 +19,7 @@ interface Subject {
     notes: Todo[];
     vocabulary: Todo[];
   };
+  summary?: HierarchicalSummary | null;
 }
 
 interface MainScreenProps {

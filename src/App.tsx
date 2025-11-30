@@ -90,7 +90,7 @@ export default function App() {
     }
   };
 
-  const handleSaveSubject = (data: { name: string; description: string; file: File | null }) => {
+  const handleSaveSubject = (data: { name: string; description: string; file: File | null; summary: any }) => {
     const newSubject: Subject = {
       id: Date.now().toString(),
       name: data.name,
@@ -101,11 +101,18 @@ export default function App() {
         quiz: [],
         notes: [],
         vocabulary: []
-      }
+      },
+      summary: data.summary || null
     };
     
     setSubjects([...subjects, newSubject]);
-    toast.success(`"${data.name}" 과목이 추가되었습니다! AI가 퀴즈를 생성했습니다.`);
+    
+    if (data.summary) {
+      toast.success(`"${data.name}" 과목이 추가되었습니다! AI가 노트 정리를 완료했습니다.`);
+    } else {
+      toast.success(`"${data.name}" 과목이 추가되었습니다!`);
+    }
+    
     setActiveTab('main');
   };
 

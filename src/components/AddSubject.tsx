@@ -1,13 +1,16 @@
 import { useState } from "react";
-import { Upload, FileText, Loader2 } from "lucide-react";
+import { Upload, FileText, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Card } from "./ui/card";
+import { summarizePDF } from "../services/api";
+import type { HierarchicalSummary } from "../services/api";
+import { Alert, AlertDescription } from "./ui/alert";
 
 interface AddSubjectProps {
-  onSave: (data: { name: string; description: string; file: File | null }) => void;
+  onSave: (data: { name: string; description: string; file: File | null; summary: HierarchicalSummary | null }) => void;
 }
 
 export function AddSubject({ onSave }: AddSubjectProps) {
@@ -16,28 +19,49 @@ export function AddSubject({ onSave }: AddSubjectProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
       setShowForm(true);
+      setError(null);
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) return;
     
     setIsProcessing(true);
-    // Simulate AI processing
-    setTimeout(() => {
-      onSave({ name, description, file });
+    setError(null);
+
+    try {
+      let summary: HierarchicalSummary | null = null;
+
+      // PDF 파일인 경우 AI 요약 생성
+      if (file && file.name.toLowerCase().endsWith('.pdf')) {
+        try {
+          summary = await summarizePDF(file);
+        } catch (err) {
+          console.error('PDF 요약 생성 실패:', err);
+          setError('PDF 요약 생성에 실패했습니다. 백엔드 서버가 실행 중인지 확인해주세요.');
+          setIsProcessing(false);
+          return;
+        }
+      }
+
+      onSave({ name, description, file, summary });
       setFile(null);
       setShowForm(false);
       setName("");
       setDescription("");
+    } catch (err) {
+      console.error('과목 저장 실패:', err);
+      setError('과목 저장에 실패했습니다.');
+    } finally {
       setIsProcessing(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -80,6 +104,13 @@ export function AddSubject({ onSave }: AddSubjectProps) {
               </Card>
             )}
 
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
             <Card className="p-6">
               <div className="space-y-4">
                 <div>
@@ -114,6 +145,7 @@ export function AddSubject({ onSave }: AddSubjectProps) {
                       setFile(null);
                       setName("");
                       setDescription("");
+                      setError(null);
                     }}
                     disabled={isProcessing}
                   >
@@ -140,7 +172,9 @@ export function AddSubject({ onSave }: AddSubjectProps) {
             {isProcessing && (
               <Card className="p-4 bg-secondary">
                 <p className="text-center text-muted-foreground">
-                  AI가 파일을 분석하여 퀴즈를 생성하고 있습니다...
+                  {file?.name.toLowerCase().endsWith('.pdf') 
+                    ? 'AI가 PDF 파일을 분석하여 노트를 생성하고 있습니다...'
+                    : 'AI가 파일을 분석하여 퀴즈를 생성하고 있습니다...'}
                 </p>
               </Card>
             )}

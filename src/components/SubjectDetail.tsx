@@ -246,7 +246,7 @@ export function SubjectDetail({ subject, onBack, activeView, onViewChange, onRes
                 </Card>
               </>
             ) : (
-              <NotesView />
+              <NotesView subject={localSubject} />
             )}
           </TabsContent>
 
